@@ -25,7 +25,7 @@ git clone https://github.com/retorillo/istanbul.vim.git ~/.vim/bundle/istanbul.v
 :wall | !npm test | Istanbul
 ```
 
-## IstanbulClear
+### IstanbulClear
 
 `IstanbulClear` command clear all signs of current buffer
 
