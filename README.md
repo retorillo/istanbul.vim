@@ -7,7 +7,7 @@ Code coverage visualizer for [istanbul](https://www.npmjs.com/package/istanbul)
 
 Works on Linux, Windows and Mac OS.
 
-DOES NOT require python. 100% VimL. :sparkles:
+No python is needed. 100% VimL :sparkles:
 
 ## Install (Pathogen)
 
@@ -17,20 +17,52 @@ git clone https://github.com/retorillo/istanbul.vim.git ~/.vim/bundle/istanbul.v
 
 ## Commands
 
-### Istanbul
+| Keymaps             | Commands                         |
+|---------------------|----------------------------------|
+| `Ctrl-I` + `Ctrl-I` | [IstanbulUpdate](IstanbulUpdate) |
+| `Ctrl-I` + `Ctrl-N` | [IstanbulNext](IstanbulNext)     |
+| `Ctrl-I` + `Ctrl-B` | [IstanbulBack](IstanbulBack)     |
+| `Ctrl-I` + `Ctrl-D` | [IstanbulClear](IstanbulClear)   |
 
-`Istanbul` command enable(or update) signs of current buffer from 'coverage/coverage.js'
+### IstanbulUpdate
+
+Update signs of current buffer from 'coverage/coverage.json'
 
 ```
-:wall | !npm test | Istanbul
+:wall | !npm test | IstanbulUpdate
+```
+
+### IstanbulNext
+
+Jump to next first line of uncovered range
+
+```
+:IstanbulNext
+```
+
+### IstanbulBack
+
+Jump to previous first line of uncovered range
+
+```
+:IstanbulBack
 ```
 
 ### IstanbulClear
 
-`IstanbulClear` command clear all signs of current buffer
+Clear all signs of current buffer
 
 ```
 :IstanbulClear
+```
+
+## Options
+
+The following options can be specified on your `~/.vimrc`
+
+```
+" Disable keymaps
+let g:istanbul#disableKeymaps = 1
 ```
 
 ## License
@@ -38,4 +70,3 @@ git clone https://github.com/retorillo/istanbul.vim.git ~/.vim/bundle/istanbul.v
 Distributed under the MIT license
 
 Copyright (C) 2016 Retorillo
-
