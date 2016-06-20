@@ -17,12 +17,12 @@ git clone https://github.com/retorillo/istanbul.vim.git ~/.vim/bundle/istanbul.v
 
 ## Commands
 
-| Keymaps             | Commands                         |
-|---------------------|----------------------------------|
-| `Ctrl-I` + `Ctrl-I` | [IstanbulUpdate](IstanbulUpdate) |
-| `Ctrl-I` + `Ctrl-N` | [IstanbulNext](IstanbulNext)     |
-| `Ctrl-I` + `Ctrl-B` | [IstanbulBack](IstanbulBack)     |
-| `Ctrl-I` + `Ctrl-D` | [IstanbulClear](IstanbulClear)   |
+| Keymaps             | Commands                          |
+|---------------------|-----------------------------------|
+| `Ctrl-I` + `Ctrl-I` | [IstanbulUpdate](#istanbulupdate) |
+| `Ctrl-I` + `Ctrl-N` | [IstanbulNext](#istanbulnext)     |
+| `Ctrl-I` + `Ctrl-B` | [IstanbulBack](#istanbulback)     |
+| `Ctrl-I` + `Ctrl-D` | [IstanbulClear](#istanbulclear)   |
 
 ### IstanbulUpdate
 
