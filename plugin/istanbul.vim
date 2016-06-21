@@ -12,24 +12,49 @@ endif
 
 let s:uncoveredRangeList = {}
 let s:hasWindows = has('win64') + has('win32') + has('win16') + has('win95')
-let s:pathSeparator = s:hasWindows ? '\' : '/'
+let s:pathSeparator = s:hasWindows ? '\\' : '/'
 
 function! s:detectSeparator(path)
   let sep = matchstr(a:path, '/\|\\')
   return strlen(sep) > 0 ? sep : s:pathSeparator
 endfunction
 
-function! s:joinPath(a, b)
-  let sep = s:detectSeparator(a:a)
-  return substitute(a:a, sep.'$', '', '').sep.a:b
+function! s:joinPath(...)
+  let parts = []
+  for part in a:000
+    if len(parts) == 0
+      let sep = s:detectSeparator(part)
+    endif
+    call add(parts, substitute(part, sep.'$', '', ''))
+  endfor
+  return join(parts, sep)
 endfunction
 
-function! s:isWindowsPath(path)
-  return s:detectSeparator(a:path) != '/'
+function! s:getPathSimilarity(a, b)
+  let lM = reverse(split(a:a, '[\\/]'))
+  let lm = reverse(split(a:b, '[\\/]'))
+  if (len(lM) < len(lm))
+    let lx = lM
+    let lM = lm
+    let lm = lx
+  endif
+  let s = 0
+  while s < len(lm) && tolower(lM[s]) == tolower(lm[s])
+    let s += 1 
+  endwhile
+  return s
 endfunction
 
-function! s:msysToWindowsPath(path)
-  return substitute(substitute(a:path, '^/\([a-z]\)/', '\1:/', ''), '/', '\', 'g')
+function! s:findSimilarPath(pathes, path)
+  let result = { 'path': '', 'similarity': 0 }
+  for p in a:pathes
+    let s = s:getPathSimilarity(p, a:path)
+    if result.similarity < s
+      let result.similarity = s
+      let result.path = p
+    endif
+  endfor
+  return result
 endfunction
 
 function! s:signCoverage(line, c, bufnr)
@@ -102,7 +127,7 @@ function! s:IstanbulUpdate()
   let bufnr = bufnr('%')
   let bufpath = expand('%:p')
   let bufdir = expand('%:h')
-  let jsonPath = s:joinPath(bufdir, 'coverage'.s:pathSeparator.'coverage.json')
+  let jsonPath = s:joinPath(bufdir, 'coverage', 'coverage.json')
   if !filereadable(jsonPath)
     echoerr '"'.jsonPath.'" is not found'
     return
@@ -110,33 +135,11 @@ function! s:IstanbulUpdate()
 
   try
     let json = json_decode(join(readfile(jsonPath)))
-
-    let root = 0
-    for path in keys(json)
-      if s:isWindowsPath(path)
-        if tolower(path) == tolower(s:msysToWindowsPath(bufpath))
-          let root = get(json, path)
-          break
-        endif
-      else
-        if s:hasWindows
-          if tolower(path) == tolower(bufpath)
-            let root = get(json, path)
-            break
-          endif
-        else
-          if path == bufpath
-            let root = get(json, path)
-            break
-          endif
-        endif
-      endif
-    endfor
-
-    if type(root) == 0
+    let similarPath = s:findSimilarPath(keys(json), bufpath)
+    if similarPath.similarity == 0
       throw '"'.bufpath.'" does not found in "'.jsonPath.'"'
     endif
-
+    let root = get(json, similarPath.path)
     let statementMap = get(root, 'statementMap')
     let s = get(root, 's')
     let fnMap = get(root, 'fnMap')
@@ -162,6 +165,7 @@ function! s:IstanbulUpdate()
       endif
     endfor
     call uniq(s:sortNumbers(uncovered))
+    echo (similarPath.path).' (Uncovered: '.len(uncovered).' lines)'
     let s:uncoveredRangeList[bufnr] = s:makeRanges(uncovered)
   catch
     echoerr v:exception
