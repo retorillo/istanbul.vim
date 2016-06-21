@@ -1,6 +1,6 @@
 command! -nargs=0 IstanbulUpdate call s:IstanbulUpdate()
 command! -nargs=0 IstanbulNext call s:IstanbulNext(0)
-command! -nargs=0 IstanbulBack call s:IstanbulNext(0)
+command! -nargs=0 IstanbulBack call s:IstanbulNext(1)
 command! -nargs=0 IstanbulClear call s:IstanbulClear()
 
 if !exists('g:istanbul#disableKeymaps') || g:istanbul#disableKeymaps
@@ -50,7 +50,8 @@ function! s:makeRanges(arr)
       let end = i
     else
       call add(ranges, [start, end])
-      let start = -1
+      let start = i
+      let end = start
     endif
   endfor
   if (start != -1)
