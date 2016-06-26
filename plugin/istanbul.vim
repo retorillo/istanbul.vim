@@ -2,15 +2,18 @@ command! -nargs=0 IstanbulUpdate call s:IstanbulUpdate()
 command! -nargs=0 IstanbulNext call s:IstanbulNext(0)
 command! -nargs=0 IstanbulBack call s:IstanbulNext(1)
 command! -nargs=0 IstanbulClear call s:IstanbulClear()
+command! -nargs=0 IstanbulMode call s:IstanbulMode()
 
 if !exists('g:istanbul#disableKeymaps') || g:istanbul#disableKeymaps
   nmap <C-I><C-I> :IstanbulUpdate<CR>
   nmap <C-I><C-N> :IstanbulNext<CR>
   nmap <C-I><C-B> :IstanbulBack<CR>
   nmap <C-I><C-D> :IstanbulClear<CR>
+  nmap <C-I><C-M> :IstanbulMode<CR>
 endif
 
-let s:uncoveredRangeList = {}
+let s:modes = {}
+let s:uncoveredRanges = {}
 let s:hasWindows = has('win64') + has('win32') + has('win16') + has('win95')
 let s:pathSeparator = s:hasWindows ? '\\' : '/'
 
@@ -57,10 +60,24 @@ function! s:findSimilarPath(pathes, path)
   return result
 endfunction
 
-function! s:signCoverage(line, c, bufnr)
+function! s:signCoverage(line, c, bufnr, type)
   let c = min([a:c, 99])
+  if len(a:type) == 0
+    if c > 0
+      let name = 'covered'.c
+      let text = c < 9 ? '0'.c : c
+      exec 'sign define '.name.' text='.text.' texthl=covered'
+    else
+      let name = 'uncovered'
+    endif
+  else
+    let t = toupper(a:type[0:1])
+    let name = c > 0 ? 'covered'.t : 'uncovered'.t
+    exec 'sign define '.name.' text='.t.' texthl='
+      \ .(c > 0 ? 'covered' : 'uncovered')
+  endif
   exec 'sign place '.a:line.' line='.a:line
-    \ .' name='.(c > 0 ? 'covered'.c : 'uncovered').' buffer='.a:bufnr
+    \ .' name='.name.' buffer='.a:bufnr
   return a:line
 endfunction
 
@@ -113,16 +130,17 @@ function! s:sortNumbers(arr)
   return a:arr
 endfunction
 
+function! s:IstanbulMode()
+  let bufnr = bufnr('%')
+  let m = get(s:modes, bufnr)
+  let s:modes[bufnr] = m + 1 % 2
+  call s:IstanbulUpdate()
+endfunction
+
 function! s:IstanbulUpdate()
   hi uncovered guifg=#d70000 guibg=#d70000 ctermfg=160 ctermbg=160
   hi covered guifg=#00d7ff guibg=#005faf ctermfg=45 ctermbg=25
   sign define uncovered text=00 texthl=uncovered
-  let c = 1
-  while c < 100
-    let text = c < 9 ? '0'.c : c
-    exec 'sign define covered'.c.' text='.text.' texthl=covered'
-    let c += 1
-  endwhile
 
   let bufnr = bufnr('%')
   let bufpath = expand('%:p')
@@ -134,39 +152,58 @@ function! s:IstanbulUpdate()
   endif
 
   try
+    let mode = get(s:modes, bufnr)
     let json = json_decode(join(readfile(jsonPath)))
     let similarPath = s:findSimilarPath(keys(json), bufpath)
     if similarPath.similarity == 0
       throw '"'.bufpath.'" does not found in "'.jsonPath.'"'
     endif
     let root = get(json, similarPath.path)
-    let statementMap = get(root, 'statementMap')
-    let s = get(root, 's')
-    let fnMap = get(root, 'fnMap')
-    let f = get(root, 'f')
-    exec 'sign unplace *'
     let uncovered = []
-    for key in keys(statementMap)
-      let item = get(statementMap, key)
-      let c = str2nr(get(s, key))
-      let start = get(get(item, 'start'), 'line')
-      let id = s:signCoverage(start, c, bufnr)
-      if c <= 0
-        call add(uncovered, id)
-      endif
-    endfor
-    for key in keys(fnMap)
-      let item = get(fnMap, key)
-      let c = str2nr(get(f, key))
-      let line = get(item, 'line')
-      let id = s:signCoverage(line, c, bufnr)
-      if c <= 0
-        call add(uncovered, id)
-      endif
-    endfor
+    exec 'sign unplace *'
+    if mode == 0
+      let statementMap = get(root, 'statementMap')
+      let s = get(root, 's')
+      let fnMap = get(root, 'fnMap')
+      let f = get(root, 'f')
+      for key in keys(statementMap)
+        let item = get(statementMap, key)
+        let c = str2nr(get(s, key))
+        let start = get(get(item, 'start'), 'line')
+        let id = s:signCoverage(start, c, bufnr, '')
+        if c <= 0
+          call add(uncovered, id)
+        endif
+      endfor
+      for key in keys(fnMap)
+        let item = get(fnMap, key)
+        let c = str2nr(get(f, key))
+        let line = get(item, 'line')
+        let id = s:signCoverage(line, c, bufnr, '')
+        if c <= 0
+          call add(uncovered, id)
+        endif
+      endfor
+    else
+      let branchMap = get(root, 'branchMap')
+      let b = get(root, 'b')
+      for key in keys(branchMap)
+        let item = get(branchMap, key)
+        let c = get(b, key)
+        let line = get(item, 'line')
+        let type = get(item, 'type')
+        let min_c = (type(c) == 3 ? min(c) : c) == 0
+        let id = s:signCoverage(line, min_c, bufnr, type)
+        if min_c <= 0
+          call add(uncovered, id)
+        endif
+      endfor
+    endif
     call uniq(s:sortNumbers(uncovered))
-    echo (similarPath.path).' (Uncovered: '.len(uncovered).' lines)'
-    let s:uncoveredRangeList[bufnr] = s:makeRanges(uncovered)
+    echohl Statement
+    echohl !mode ? 'STATEMENT' : 'BRANCH'
+    echohl None
+    let s:uncoveredRanges[bufnr] = s:makeRanges(uncovered)
   catch
     echoerr v:exception
   endtry
@@ -174,11 +211,11 @@ endfunction
 
 function! s:IstanbulNext(reverse)
   let bufnr = bufnr('%')
-  if !has_key(s:uncoveredRangeList, bufnr)
+  if !has_key(s:uncoveredRanges, bufnr)
     echoerr 'No instanbul information loaded on current buffer'
     return
   endif
-  let rangeList = get(s:uncoveredRangeList, bufnr)
+  let rangeList = get(s:uncoveredRanges, bufnr)
   if len(rangeList) == 0
     echoerr 'There are no uncovered lines on current buffer'
     return
@@ -199,6 +236,6 @@ endfunction
 
 function! s:IstanbulClear()
   let bufnr = bufnr('%')
-  call remove(s:uncoveredRangeList, bufnr)
+  call remove(s:uncoveredRanges, bufnr)
   exec 'sign unplace * buffer='.bufnr
 endfunction
