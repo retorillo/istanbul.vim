@@ -3,7 +3,8 @@
 ![istanbul.vim](preview.gif)
 
 Code coverage visualizer for [istanbul](https://www.npmjs.com/package/istanbul)
-`coverage.json`
+`coverage.json`. Now supports line coverage like [Coveralls](https://coveralls.io),
+plus branch coverage.
 
 Works on Linux, Windows and Mac OS.
 
@@ -20,6 +21,7 @@ git clone https://github.com/retorillo/istanbul.vim.git ~/.vim/bundle/istanbul.v
 | Keymaps             | Commands                          |
 |---------------------|-----------------------------------|
 | `Ctrl-I` + `Ctrl-I` | [IstanbulUpdate](#istanbulupdate) |
+| `Ctrl-I` + `Ctrl-M` | [IstanbulMode](#istanbulmode)     |
 | `Ctrl-I` + `Ctrl-N` | [IstanbulNext](#istanbulnext)     |
 | `Ctrl-I` + `Ctrl-B` | [IstanbulBack](#istanbulback)     |
 | `Ctrl-I` + `Ctrl-D` | [IstanbulClear](#istanbulclear)   |
@@ -27,9 +29,29 @@ git clone https://github.com/retorillo/istanbul.vim.git ~/.vim/bundle/istanbul.v
 ### IstanbulUpdate
 
 Update signs of current buffer from 'coverage/coverage.json'
+By default, visualize statement and function coverage information like
+[Coveralls](https://coveralls.io/).  
+Can toggle mode by using [IstanbulMode](#istanbulmode).
 
 ```
 :wall | !npm test | IstanbulUpdate
+```
+
+### IstanbulMode
+
+Change or toggle visualization mode of coverage information of current buffer.
+Now supports the following modes:
+
+- `line` (gathered information from `statementMap` and `fnMap`)
+- `branch` (gathered information from `branchMap`)
+
+```
+" Toggle between line and branch coverage
+:IstanbulMode
+" Change to line coverage
+:IstanbulMode line
+" Change to branch coverage
+:IstanbulMode branch
 ```
 
 ### IstanbulNext

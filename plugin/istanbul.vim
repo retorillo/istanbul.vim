@@ -2,7 +2,7 @@ command! -nargs=0 IstanbulUpdate call s:IstanbulUpdate()
 command! -nargs=0 IstanbulNext call s:IstanbulNext(0)
 command! -nargs=0 IstanbulBack call s:IstanbulNext(1)
 command! -nargs=0 IstanbulClear call s:IstanbulClear()
-command! -nargs=0 IstanbulMode call s:IstanbulMode()
+command! -nargs=* IstanbulMode call s:IstanbulMode(<f-args>)
 
 if !exists('g:istanbul#disableKeymaps') || g:istanbul#disableKeymaps
   nmap <C-I><C-I> :IstanbulUpdate<CR>
@@ -71,7 +71,7 @@ function! s:signCoverage(line, c, bufnr, type)
       let name = 'uncovered'
     endif
   else
-    let t = toupper(a:type[0:1])
+    let t = toupper(s:makeSignText(a:type))
     let name = c > 0 ? 'covered'.t : 'uncovered'.t
     exec 'sign define '.name.' text='.t.' texthl='
       \ .(c > 0 ? 'covered' : 'uncovered')
@@ -130,17 +130,44 @@ function! s:sortNumbers(arr)
   return a:arr
 endfunction
 
-function! s:IstanbulMode()
+function! s:makeSignText(chain)
+  if len(a:chain) <= 2
+    return a:chain
+  endif
+  let words = split(a:chain, '-')
+  if len(words) == 1
+    return a:chain[0:1]
+  endif
+  let abbreb = ''
+  for i in words
+    let abbreb = abbreb.i[0:0]
+  endfor
+  return abbreb
+endfunction
+
+function! s:IstanbulMode(...)
   let bufnr = bufnr('%')
   let m = get(s:modes, bufnr)
-  let s:modes[bufnr] = m + 1 % 2
+  if len(a:000) == 0
+    let s:modes[bufnr] = (m + 1) % 2
+  else
+    if tolower(a:1) == 'line'
+      let s:modes[bufnr] = 0
+    elseif tolower(a:1) == 'branch'
+      let s:modes[bufnr] = 1
+    else
+      echoerr 'Unkown mode: '.a:1
+      return
+    endif
+  endif
   call s:IstanbulUpdate()
 endfunction
 
 function! s:IstanbulUpdate()
-  hi uncovered guifg=#d70000 guibg=#d70000 ctermfg=160 ctermbg=160
+  hi uncovered_nt guifg=#d70000 guibg=#d70000 ctermfg=160 ctermbg=160
+  hi uncovered guifg=#ffd700 guibg=#d70000 ctermfg=225 ctermbg=160
   hi covered guifg=#00d7ff guibg=#005faf ctermfg=45 ctermbg=25
-  sign define uncovered text=00 texthl=uncovered
+  sign define uncovered text=00 texthl=uncovered_nt
 
   let bufnr = bufnr('%')
   let bufpath = expand('%:p')
@@ -162,6 +189,7 @@ function! s:IstanbulUpdate()
     let uncovered = []
     exec 'sign unplace *'
     if mode == 0
+      let msg = 'LINE COVERAGE'
       let statementMap = get(root, 'statementMap')
       let s = get(root, 's')
       let fnMap = get(root, 'fnMap')
@@ -185,6 +213,7 @@ function! s:IstanbulUpdate()
         endif
       endfor
     else
+      let msg = 'BRANCH COVERAGE'
       let branchMap = get(root, 'branchMap')
       let b = get(root, 'b')
       for key in keys(branchMap)
@@ -192,7 +221,7 @@ function! s:IstanbulUpdate()
         let c = get(b, key)
         let line = get(item, 'line')
         let type = get(item, 'type')
-        let min_c = (type(c) == 3 ? min(c) : c) == 0
+        let min_c = type(c) == 3 ? min(c) : c 
         let id = s:signCoverage(line, min_c, bufnr, type)
         if min_c <= 0
           call add(uncovered, id)
@@ -201,7 +230,7 @@ function! s:IstanbulUpdate()
     endif
     call uniq(s:sortNumbers(uncovered))
     echohl Statement
-    echohl !mode ? 'STATEMENT' : 'BRANCH'
+    echo msg
     echohl None
     let s:uncoveredRanges[bufnr] = s:makeRanges(uncovered)
   catch
