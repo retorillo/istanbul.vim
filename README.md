@@ -10,6 +10,10 @@ Works on Linux, Windows and Mac OS.
 
 No python is needed. 100% VimL :sparkles:
 
+## Requirements
+
+- Vim 7.4.1154 or later ([Requires native JSON support](https://github.com/vim/vim/commit/ee695f787ade7fd88fc5f5497553d95c0c3645b5))
+
 ## Install (Pathogen)
 
 ```
