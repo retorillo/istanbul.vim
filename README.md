@@ -12,12 +12,16 @@ No python is needed. 100% VimL :sparkles:
 
 ## Requirements
 
-- Vim 7.4.1154 or later ([Requires native JSON support](https://github.com/vim/vim/commit/ee695f787ade7fd88fc5f5497553d95c0c3645b5))
+- Vim >= 7.4.1154 (Supports JSON natively)
+  - OR install additionaly my JSON plugin http://github.com/retorillo/json.vim.git
 
 ## Install (Pathogen)
 
-```
+```bash
 git clone https://github.com/retorillo/istanbul.vim.git ~/.vim/bundle/istanbul.vim
+
+# optional (only if your Vim does not support JSON natively)
+git clone https://github.com/retorillo/json.vim.git ~/.vim/bundle/json.vim
 ```
 
 ## Commands

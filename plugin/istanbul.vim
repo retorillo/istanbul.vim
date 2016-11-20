@@ -4,6 +4,28 @@ command! -nargs=0 IstanbulBack call s:IstanbulNext(1)
 command! -nargs=0 IstanbulClear call s:IstanbulClear()
 command! -nargs=* IstanbulMode call s:IstanbulMode(<f-args>)
 
+function! s:parsejson(json)
+  if !exists("*json_decode")
+    try
+      return retorillo#json#parse(a:json)
+    catch
+      if !exists("*retorillo#json#parse")
+        throw "Your VIM does not support JSON(json_decode) natively, "
+          \ . "consider to use my plugin retorillo/json.vim"
+      endif
+      throw v:exception
+    endtry
+  endif
+  return json_decode(a:json)
+endfunction
+function! s:uniq(array)
+  let d = {}
+  for i in a:array
+    let d[i] = 1
+  endfor
+  return keys(d)
+endfunction
+
 if !exists('g:istanbul#disableKeymaps') || g:istanbul#disableKeymaps
   nmap <C-I><C-I> :IstanbulUpdate<CR>
   nmap <C-I><C-N> :IstanbulNext<CR>
@@ -180,7 +202,7 @@ function! s:IstanbulUpdate()
 
   try
     let mode = get(s:modes, bufnr)
-    let json = json_decode(join(readfile(jsonPath)))
+    let json = s:parsejson(join(readfile(jsonPath)))
     let similarPath = s:findSimilarPath(keys(json), bufpath)
     if similarPath.similarity == 0
       throw '"'.bufpath.'" does not found in "'.jsonPath.'"'
@@ -228,7 +250,7 @@ function! s:IstanbulUpdate()
         endif
       endfor
     endif
-    call uniq(s:sortNumbers(uncovered))
+    call s:uniq(s:sortNumbers(uncovered))
     echohl Statement
     echo msg
     echohl None
