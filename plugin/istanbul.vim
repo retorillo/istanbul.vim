@@ -186,9 +186,15 @@ function! s:IstanbulMode(...)
 endfunction
 
 function! s:IstanbulUpdate()
-  hi uncovered_nt guifg=#d70000 guibg=#d70000 ctermfg=160 ctermbg=160
-  hi uncovered guifg=#ffd700 guibg=#d70000 ctermfg=225 ctermbg=160
-  hi covered guifg=#00d7ff guibg=#005faf ctermfg=45 ctermbg=25
+  if !has('gui_running') && &t_Co < 256
+    hi uncovered_nt guifg=red guibg=red ctermfg=red ctermbg=red
+    hi uncovered guifg=white guibg=red ctermfg=white ctermbg=red
+    hi covered guifg=white guibg=blue ctermfg=white ctermbg=blue
+  else
+    hi uncovered_nt guifg=#d70000 guibg=#d70000 ctermfg=160 ctermbg=160
+    hi uncovered guifg=#ffd700 guibg=#d70000 ctermfg=225 ctermbg=160
+    hi covered guifg=#00d7ff guibg=#005faf ctermfg=45 ctermbg=25
+  endif
   sign define uncovered text=00 texthl=uncovered_nt
 
   let bufnr = bufnr('%')
