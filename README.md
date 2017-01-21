@@ -12,8 +12,8 @@ No python is needed. 100% VimL :sparkles:
 
 ## Requirements
 
-- Vim >= 7.4.1154 (Supports JSON natively)
-  - OR install additionaly my JSON plugin http://github.com/retorillo/json-polyfill.vim
+- Vim 7.x + json-ponyfill(http://github.com/retorillo/json-ponyfill.vim)
+- OR Vim >= 7.4.1154 (Supports JSON natively)
 
 ## Install (Pathogen)
 
@@ -82,4 +82,4 @@ Clear all signs of current buffer
 
 Distributed under the MIT license
 
-Copyright (C) 2016 Retorillo
+Copyright (C) 2016-2017 Retorillo
