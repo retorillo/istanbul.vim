@@ -13,7 +13,7 @@ No python is needed. 100% VimL :sparkles:
 ## Requirements
 
 - Vim >= 7.4.1154 (Supports JSON natively)
-  - OR install additionaly my JSON plugin http://github.com/retorillo/json.vim.git
+  - OR install additionaly my JSON plugin http://github.com/retorillo/json-polyfill.vim
 
 ## Install (Pathogen)
 
@@ -21,18 +21,10 @@ No python is needed. 100% VimL :sparkles:
 git clone https://github.com/retorillo/istanbul.vim.git ~/.vim/bundle/istanbul.vim
 
 # optional (only if your Vim does not support JSON natively)
-git clone https://github.com/retorillo/json.vim.git ~/.vim/bundle/json.vim
+git clone https://github.com/retorillo/json-ponyfill.vim.git ~/.vim/bundle/json-ponyfill.vim
 ```
 
 ## Commands
-
-| Keymaps             | Commands                          |
-|---------------------|-----------------------------------|
-| `Ctrl-I` + `Ctrl-I` | [IstanbulUpdate](#istanbulupdate) |
-| `Ctrl-I` + `Ctrl-M` | [IstanbulMode](#istanbulmode)     |
-| `Ctrl-I` + `Ctrl-N` | [IstanbulNext](#istanbulnext)     |
-| `Ctrl-I` + `Ctrl-B` | [IstanbulBack](#istanbulback)     |
-| `Ctrl-I` + `Ctrl-D` | [IstanbulClear](#istanbulclear)   |
 
 ### IstanbulUpdate
 
@@ -84,15 +76,6 @@ Clear all signs of current buffer
 
 ```
 :IstanbulClear
-```
-
-## Options
-
-The following options can be specified on your `~/.vimrc`
-
-```
-" Disable keymaps
-let g:istanbul#disableKeymaps = 1
 ```
 
 ## License

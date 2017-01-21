@@ -6,18 +6,11 @@ command! -nargs=* IstanbulMode call s:IstanbulMode(<f-args>)
 
 function! s:parsejson(json)
   if !exists("*json_decode")
-    try
-      return retorillo#json#parse(a:json)
-    catch
-      if !exists("*retorillo#json#parse")
-        throw "Your VIM does not support JSON(json_decode) natively, "
-          \ . "consider to use my plugin retorillo/json.vim"
-      endif
-      throw v:exception
-    endtry
+    return json_ponyfill#json_decode(a:json)
   endif
   return json_decode(a:json)
 endfunction
+
 function! s:uniq(array)
   let d = {}
   for i in a:array
@@ -25,14 +18,6 @@ function! s:uniq(array)
   endfor
   return keys(d)
 endfunction
-
-if !exists('g:istanbul#disableKeymaps') || g:istanbul#disableKeymaps
-  nmap <C-I><C-I> :IstanbulUpdate<CR>
-  nmap <C-I><C-N> :IstanbulNext<CR>
-  nmap <C-I><C-B> :IstanbulBack<CR>
-  nmap <C-I><C-D> :IstanbulClear<CR>
-  nmap <C-I><C-M> :IstanbulMode<CR>
-endif
 
 let s:modes = {}
 let s:uncoveredRanges = {}
