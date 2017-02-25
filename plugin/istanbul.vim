@@ -245,7 +245,25 @@ function! s:IstanbulUpdate()
     echohl Statement
     echo msg
     echohl None
-    let s:uncoveredRanges[bufnr] = s:makeRanges(uncovered)
+    let range = s:makeRanges(uncovered)
+    let s:uncoveredRanges[bufnr] = range
+
+    let qflist = filter(getqflist(), 
+      \ printf('v:val["text"] !~ "^ISTANBUL\\.VIM:" || v:val["bufnr"] != %d', bufnr))
+    for r in range
+      if r[0] == r[1]
+        let qfmsg = printf('ISTANBUL.VIM: Uncovered line %d', r[0])
+      else
+        let qfmsg = printf('ISTANBUL.VIM: Uncovered range from line %d to %d', r[0], r[1])
+      endif
+      call add(qflist, {
+        \ 'bufnr': bufnr,
+        \ 'lnum': r[0],
+        \ 'text': qfmsg,
+        \ 'type': 'W',
+        \ })
+    endfor
+    call setqflist(qflist)
   catch
     echoerr v:exception
   endtry
