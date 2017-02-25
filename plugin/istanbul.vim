@@ -200,7 +200,7 @@ function! s:IstanbulUpdate()
     endif
     let root = get(json, similarPath.path)
     let uncovered = []
-    exec 'sign unplace *'
+    exec printf('sign unplace * buffer=%s', bufnr)
     if mode == 0
       let msg = 'LINE COVERAGE'
       let statementMap = get(root, 'statementMap')
