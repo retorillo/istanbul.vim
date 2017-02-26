@@ -1,3 +1,10 @@
+if exists('g:istanbul_version')
+  finish
+endif
+let g:istanbul_version = '1.2.0'
+let s:keepcpo = &cpo
+set cpo&vim
+
 command! -nargs=0 IstanbulUpdate call s:IstanbulUpdate()
 command! -nargs=0 IstanbulNext call s:IstanbulNext(0)
 command! -nargs=0 IstanbulBack call s:IstanbulNext(1)
@@ -315,3 +322,6 @@ function! s:IstanbulClear()
   call remove(s:uncoveredRanges, bufnr)
   exec 'sign unplace * buffer='.bufnr
 endfunction
+
+let &cpo = s:keepcpo
+unlet s:keepcpo
