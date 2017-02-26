@@ -83,8 +83,10 @@ function! s:signCoverage(line, c, bufnr, type)
     exec 'sign define '.name.' text='.t.' texthl='
       \ .(c > 0 ? 'covered' : 'uncovered')
   endif
-  exec 'sign place '.a:line.' line='.a:line
-    \ .' name='.name.' buffer='.a:bufnr
+  if a:line > 0
+    exec 'sign place '.a:line.' line='.a:line
+      \ .' name='.name.' buffer='.a:bufnr
+  endif
   return a:line
 endfunction
 
