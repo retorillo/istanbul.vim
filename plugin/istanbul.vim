@@ -184,8 +184,22 @@ function! s:IstanbulUpdate()
 
   let bufnr = bufnr('%')
   let bufpath = expand('%:p')
-  let bufdir = expand('%:h')
-  let jsonPath = s:joinPath(bufdir, 'coverage', 'coverage.json')
+
+  let jsonPath = ''
+  let filenames = ['coverage.json', 'coverage-final.json']
+  let expandDir = '%:p:h'
+  let dir = expand(expandDir)
+  while len(dir) > 1 && !filereadable(jsonPath)
+    for f in filenames
+      let jsonPath = s:joinPath(dir, 'coverage', f)
+      if filereadable(jsonPath)
+        break
+      end
+    endfor
+    let expandDir .= ':h'
+    let dir = expand(expandDir)
+  endwhile
+
   if !filereadable(jsonPath)
     echoerr '"'.jsonPath.'" is not found'
     return
