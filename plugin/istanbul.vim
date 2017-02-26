@@ -1,3 +1,10 @@
+if exists('g:istanbul_version')
+  finish
+endif
+let g:istanbul_version = '1.2.0'
+let s:keepcpo = &cpo
+set cpo&vim
+
 command! -nargs=0 IstanbulUpdate call s:IstanbulUpdate()
 command! -nargs=0 IstanbulNext call s:IstanbulNext(0)
 command! -nargs=0 IstanbulBack call s:IstanbulNext(1)
@@ -83,8 +90,10 @@ function! s:signCoverage(line, c, bufnr, type)
     exec 'sign define '.name.' text='.t.' texthl='
       \ .(c > 0 ? 'covered' : 'uncovered')
   endif
-  exec 'sign place '.a:line.' line='.a:line
-    \ .' name='.name.' buffer='.a:bufnr
+  if a:line > 0
+    exec 'sign place '.a:line.' line='.a:line
+      \ .' name='.name.' buffer='.a:bufnr
+  endif
   return a:line
 endfunction
 
@@ -184,8 +193,22 @@ function! s:IstanbulUpdate()
 
   let bufnr = bufnr('%')
   let bufpath = expand('%:p')
-  let bufdir = expand('%:h')
-  let jsonPath = s:joinPath(bufdir, 'coverage', 'coverage.json')
+
+  let jsonPath = ''
+  let filenames = ['coverage.json', 'coverage-final.json']
+  let expandDir = '%:p:h'
+  let dir = expand(expandDir)
+  while len(dir) > 1 && !filereadable(jsonPath)
+    for f in filenames
+      let jsonPath = s:joinPath(dir, 'coverage', f)
+      if filereadable(jsonPath)
+        break
+      end
+    endfor
+    let expandDir .= ':h'
+    let dir = expand(expandDir)
+  endwhile
+
   if !filereadable(jsonPath)
     echoerr '"'.jsonPath.'" is not found'
     return
@@ -299,3 +322,6 @@ function! s:IstanbulClear()
   call remove(s:uncoveredRanges, bufnr)
   exec 'sign unplace * buffer='.bufnr
 endfunction
+
+let &cpo = s:keepcpo
+unlet s:keepcpo
