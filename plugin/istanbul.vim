@@ -197,20 +197,23 @@ function! s:IstanbulUpdate()
   let jsonPath = ''
   let filenames = ['coverage.json', 'coverage-final.json']
   let expandDir = '%:p:h'
-  let dir = expand(expandDir)
-  while len(dir) > 1 && !filereadable(jsonPath)
-    for f in filenames
-      let jsonPath = s:joinPath(dir, 'coverage', f)
-      if filereadable(jsonPath)
+  let nextdir = expand(expandDir)
+  let dir = ''
+  while dir != nextdir && empty(jsonPath)
+    let dir = nextdir
+    for file in filenames
+      let path = s:joinPath(dir, 'coverage', file)
+      if filereadable(path)
+        let jsonPath = path
         break
       end
     endfor
     let expandDir .= ':h'
-    let dir = expand(expandDir)
+    let nextdir = expand(expandDir)
   endwhile
 
-  if !filereadable(jsonPath)
-    echoerr '"'.jsonPath.'" is not found'
+  if empty(jsonPath)
+    echoerr 'coverage.json is not found'
     return
   endif
 
