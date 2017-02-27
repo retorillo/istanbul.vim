@@ -47,6 +47,14 @@ endfunction
 
 let s:windows = has('win64') || has('win32') || has('win16') || has('win95')
 
+call s:describe('autoload/istanbul/error.vim')
+  call s:describe('istanbul#error#spreadcall')
+    call s:itshouldeql('should execute multiple arguments function by list (like ES2015 spread syntax)',
+      \ istanbul#error#spreadcall('printf', ['%s %s %s %.4f', 'foo', 'bar', 'baz', 12.345]),
+      \ 'foo bar baz 12.3450')
+  call s:enddescribe()
+call s:enddescribe()
+
 call s:describe('autoload/istanbul/path.vim')
   call s:describe('istanbul#path#sep')
     call s:itshouldeql('should detect backslash (\) from Windows path format',

@@ -30,11 +30,10 @@ function! istanbul#mode(mode)
     elseif tolower(a:mode) == 'branch'
       let s:modes[bufnr] = 1
     else
-      echoerr printf('Unkown mode: %s', a:mode)
-      return
+      throw istanbul#error#format('InvalidMode', a:mode)
     endif
   endif
-  call s:IstanbulUpdate('')
+  call istanbul#update('')
 endfunction
 
 function! istanbul#update(jsonPath)
@@ -58,16 +57,14 @@ function! istanbul#update(jsonPath)
     let nextdir = expand(expandDir)
   endwhile
   if empty(jsonPath)
-    echoerr printf('coverage.json is not found. (g:istanbul#jsonPath = %s)',
-      \ string(g:istanbul#jsonPath))
-    return
+    throw istanbul#error#format('JsonNotFound', string(g:istanbul#jsonPath))
   endif
   try
     let mode = get(s:modes, bufnr)
     let json = istanbul#parsejson(join(readfile(jsonPath)))
     let similarPath = istanbul#path#mostsimilar(keys(json), bufPath)
     if empty(similarPath)
-      throw printf('"%s" does not found in "%s"', bufPath, jsonPath)
+      throw istanbul#error#format('EntryNotFound', expand('%:.'), jsonPath)
     endif
     let root = get(json, similarPath)
     let uncovered = []
@@ -143,13 +140,11 @@ endfunction
 function! istanbul#next(reverse)
   let bufnr = bufnr('%')
   if !has_key(s:uncoveredRanges, bufnr)
-    echoerr 'No instanbul information loaded on current buffer'
-    return
+    throw istanbul#error#format('JsonUnloaded', expand('%:.'))
   endif
   let rangeList = get(s:uncoveredRanges, bufnr)
   if len(rangeList) == 0
-    echoerr 'There are no uncovered lines on current buffer'
-    return
+    throw istanbul#error#format('NoUncoveredLine', expand('%:.'))
   endif
   let cur = line('.')
   for r in a:reverse ? reverse(copy(rangeList)) : rangeList
