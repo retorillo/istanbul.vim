@@ -1,3 +1,6 @@
+let s:keepcpo = &cpo
+set cpo&vim
+
 let g:istanbul#error#messages = {
   \ 'InvalidMode' : '"%s" is invalid mode for InstanbulMode',
   \ 'JsonNotFound' : 'coverage.json is not found. (g:istanbul#jsonPath = %s)',
@@ -14,3 +17,6 @@ function! istanbul#error#format(key, ...)
   return printf('Istanbul: %s', istanbul#error#spreadcall('printf',
     \ extend([g:istanbul#error#messages[a:key]], a:000)))
 endfunction
+
+let &cpo = s:keepcpo
+unlet s:keepcpo
