@@ -114,8 +114,8 @@ call s:describe('autoload/istanbul/path.vim')
       \ istanbul#path#ancestors('C:\foo\bar\baz'),
       \ ['C:\foo\bar\baz', 'C:\foo\bar', 'C:\foo', 'C:'] )
     call s:itshouldeql('should return ancestors for UNC path format',
-      \ istanbul#path#ancestors('//foo/bar/baz'),
-      \ ['//foo/bar/baz', '//foo/bar', '//foo' ] )
+      \ istanbul#path#ancestors('\\foo\bar\baz'),
+      \ ['\\foo\bar\baz', '\\foo\bar', '\\foo' ] )
   call s:enddescribe()
   call s:describe('istanbul#path#join')
     call s:itshouldeql('should join (foo, bar) to ''foo\bar'' (unix) or ''foo/bar'' (win)',
