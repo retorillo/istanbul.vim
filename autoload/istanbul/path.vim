@@ -4,6 +4,21 @@ set cpo&vim
 let s:windows = has('win64') || has('win32') ||  has('win16') || has('win95')
 let s:sep = s:windows ? '\' : '/'
 
+function! istanbul#path#ancestors(path)
+  let ancestors = []
+  let parts = split(a:path, '[\\/]', 1)
+  let sep = istanbul#path#sep(a:path)
+  let c = len(parts)
+  while c > 0
+    let c -= 1
+    if empty(parts[c])
+      continue
+    endif
+    call add(ancestors, join(parts[: c], sep))
+  endwhile
+  return ancestors
+endfunction
+
 function! istanbul#path#sep(path)
   let sep = matchstr(a:path, '[\\/]')
   return strlen(sep) > 0 ? sep : s:sep

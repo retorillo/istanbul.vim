@@ -36,26 +36,22 @@ function! istanbul#mode(mode)
   call istanbul#update('')
 endfunction
 
+function! istanbul#findjson(file)
+  for dir in istanbul#path#ancestors(fnamemodify(a:file, ':p:h'))
+    for f in g:istanbul#jsonPath
+      let path = istanbul#path#join(dir, f)
+      if filereadable(path)
+        return path
+      endif
+    endfor
+  endfor
+  return ''
+endfunction
+
 function! istanbul#update(jsonPath)
   let bufnr = bufnr('%')
   let bufPath = expand('%:p')
-
-  let jsonPath = a:jsonPath
-  let expandDir = '%:p:h'
-  let nextdir = expand(expandDir)
-  let dir = ''
-  while dir != nextdir && empty(jsonPath)
-    let dir = nextdir
-    for file in g:istanbul#jsonPath
-      let path = istanbul#path#join(dir, file)
-      if filereadable(path)
-        let jsonPath = path
-        break
-      end
-    endfor
-    let expandDir .= ':h'
-    let nextdir = expand(expandDir)
-  endwhile
+  let jsonPath = empty(a:jsonPath) ? istanbul#findjson(bufPath) : a:jsonPath
   if empty(jsonPath)
     throw istanbul#error#format('JsonNotFound', string(g:istanbul#jsonPath))
   endif

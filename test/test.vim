@@ -22,8 +22,8 @@ endfunction
 function! s:failing(it, actual, expect)
   echohl WarningMsg
   echomsg printf('%sx %s', repeat(s:indent, s:nest), a:it)
-  echomsg printf('%s  expect: %s', repeat(s:indent, s:nest), a:expect)
-  echomsg printf('%s  actual: %s', repeat(s:indent, s:nest), a:actual)
+  echomsg printf('%s  expect: %s', repeat(s:indent, s:nest), string(a:expect))
+  echomsg printf('%s  actual: %s', repeat(s:indent, s:nest), string(a:actual))
   echohl None
 endfunction
 function! s:shouldeql(it, actual, expect, time)
@@ -47,6 +47,39 @@ endfunction
 
 let s:windows = has('win64') || has('win32') || has('win16') || has('win95')
 
+function! s:rmdir(path)
+  let rel = fnamemodify(a:path, ':.')
+  if isdirectory(rel)
+    if s:windows
+      let cmd = printf('rmdir /S /Q %s', rel)
+    else
+      let cmd = printf('rm -rf %s', rel)
+    endif
+    echo system(cmd)
+  endif
+endfunction
+
+call s:rmdir('test/_')
+call mkdir('test/_/foo/bar/baz/coverage', 'p')
+call mkdir('test/_/foo/coverage', 'p')
+call writefile([], 'test/_/foo/bar/baz/coverage/coverage.json')
+call writefile([], 'test/_/foo/coverage/coverage.json')
+
+call s:describe('autoload/istanbul.vim')
+  call s:describe('istanbul#findjson')
+    call s:itshouldeql('should detect coverage.json that is placed on the same directory',
+      \ fnamemodify(istanbul#findjson('test/_/foo/bar/baz/index.js'), ':.'),
+      \ !s:windows
+        \ ? 'test/_/foo/bar/baz/coverage/coverage.json'
+        \ : 'test\_\foo\bar\baz\coverage\coverage.json')
+    call s:itshouldeql('should detect coverage.json that is placed on upper directory',
+      \ fnamemodify(istanbul#findjson('test/_/foo/bar/index.js'), ':.'),
+      \ !s:windows
+        \ ? 'test/_/foo/coverage/coverage.json'
+        \ : 'test\_\foo\coverage\coverage.json')
+  call s:enddescribe()
+call s:enddescribe()
+
 call s:describe('autoload/istanbul/error.vim')
   call s:describe('istanbul#error#spreadcall')
     call s:itshouldeql('should execute multiple arguments function by list (like ES2015 spread syntax)',
@@ -69,6 +102,20 @@ call s:describe('autoload/istanbul/path.vim')
       \ istanbul#path#sep('foo'), s:windows ? '\' : '/')
     call s:itshouldeql('should return OS specific separator from empty string',
       \ istanbul#path#sep(''), s:windows ? '\' : '/')
+  call s:enddescribe()
+  call s:describe('istanbul#path#ancestors')
+    call s:itshouldeql('should return partial ancestors for partial path',
+      \ istanbul#path#ancestors('foo\bar\baz'),
+      \ ['foo\bar\baz', 'foo\bar', 'foo' ] )
+    call s:itshouldeql('should return ancestors for UNIX path format',
+      \ istanbul#path#ancestors('\foo\bar\baz'),
+      \ ['\foo\bar\baz', '\foo\bar', '\foo' ] )
+    call s:itshouldeql('should return ancestors for Windows path format',
+      \ istanbul#path#ancestors('C:\foo\bar\baz'),
+      \ ['C:\foo\bar\baz', 'C:\foo\bar', 'C:\foo', 'C:'] )
+    call s:itshouldeql('should return ancestors for UNC path format',
+      \ istanbul#path#ancestors('//foo/bar/baz'),
+      \ ['//foo/bar/baz', '//foo/bar', '//foo' ] )
   call s:enddescribe()
   call s:describe('istanbul#path#join')
     call s:itshouldeql('should join (foo, bar) to ''foo\bar'' (unix) or ''foo/bar'' (win)',
@@ -150,6 +197,8 @@ call s:describe('autoload/istanbul/numlist.vim')
         \ istanbul#numlist#mkrange([1, 3, 5, 7]), [[1, 1], [3, 3], [5, 5], [7, 7]])
   call s:enddescribe()
 call s:enddescribe()
+
+call s:rmdir('test/_')
 
 let &cpo = s:keepcpo
 unlet s:keepcpo
