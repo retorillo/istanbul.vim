@@ -2,10 +2,12 @@ let s:keepcpo = &cpo
 set cpo&vim
 
 let s:modes = {}
-let s:uncoveredRanges = {}
 
 if !exists('g:istanbul#jsonPath')
   let g:istanbul#jsonPath = ['coverage/coverage.json', 'coverage/coverage-final.json']
+endif
+if !exists('g:istanbul#jumpStrategy')
+  let g:istanbul#jumpStrategy = 'cyclic'
 endif
 
 function! istanbul#parsejson(json)
@@ -109,57 +111,34 @@ function! istanbul#update(jsonPath)
     echohl Statement
     echo msg
     echohl None
-    let range = istanbul#numlist#mkrange(uncovered)
-    let s:uncoveredRanges[bufnr] = range
-
-    let qflist = filter(getqflist(),
-      \ printf('v:val["text"] !~ "^ISTANBUL\\.VIM:" || v:val["bufnr"] != %d', bufnr))
-    for r in range
-      if r[0] == r[1]
-        let qfmsg = printf('ISTANBUL.VIM: Uncovered line %d', r[0])
-      else
-        let qfmsg = printf('ISTANBUL.VIM: Uncovered range from line %d to %d', r[0], r[1])
-      endif
-      call add(qflist, {
-        \ 'bufnr': bufnr,
-        \ 'lnum': r[0],
-        \ 'text': qfmsg,
-        \ 'type': 'W',
-        \ })
-    endfor
-    call setqflist(qflist)
+    let ranges = istanbul#numlist#mkrange(uncovered)
+    call istanbul#quickfix#update(bufnr, ranges)
   catch
     echoerr v:exception
   endtry
 endfunction
 
-function! istanbul#next(reverse)
-  let bufnr = bufnr('%')
-  if !has_key(s:uncoveredRanges, bufnr)
-    throw istanbul#error#format('JsonUnloaded', expand('%:.'))
+function! istanbul#jump(bang, count)
+  let cyclic = g:istanbul#jumpStrategy == 'cyclic'
+  let nr = istanbul#quickfix#jumpnr(cyclic, a:bang, bufnr('%'), line('.'),
+    \ '^'.g:istanbul#quickfix#prefix, a:count)
+  if nr > 0
+    execute printf('cc%s %d', a:bang ? '!' : '', nr)
+    normal zO
+    normal z.
+  elseif nr == g:istanbul#quickfix#errjumpdesc
+    throw istanbul#error#format('OutOfQuickfixDesc', g:istanbul#jumpStrategy)
+  elseif nr == g:istanbul#quickfix#errjumpasc
+    throw istanbul#error#format('OutOfQuickfixAsc', g:istanbul#jumpStrategy)
+  elseif nr == g:istanbul#quickfix#errjumpempty
+    throw istanbul#error#format('EmptyQuickfix')
   endif
-  let rangeList = get(s:uncoveredRanges, bufnr)
-  if len(rangeList) == 0
-    throw istanbul#error#format('NoUncoveredLine', expand('%:.'))
-  endif
-  let cur = line('.')
-  for r in a:reverse ? reverse(copy(rangeList)) : rangeList
-    if (!a:reverse && cur < get(r, 0))
-      \ || (a:reverse && cur > get(r, 0))
-      let range = r
-      break
-    endif
-  endfor
-  if !exists('range')
-    let range = get(rangeList, a:reverse ? len(rangeList) - 1 : 0)
-  endif
-  execute printf('sign jump %d buffer=%d', get(range, 0), bufnr)
 endfunction
 
-function! istanbul#clear()
+function! istanbul#clear(bang)
   let bufnr = bufnr('%')
-  call remove(s:uncoveredRanges, bufnr)
   exec printf('sign unplace * buffer=%d', bufnr)
+  call istanbul#quickfix#clear(a:bang ? -1 : bufnr)
 endfunction
 
 let &cpo = s:keepcpo

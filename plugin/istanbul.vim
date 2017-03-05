@@ -11,17 +11,22 @@ command!
   \ IstanbulMode
   \ call istanbul#mode('<args>')
 command!
-  \ -nargs=0
+  \ -count=1
+  \ -bang
+  \ -nargs=?
   \ IstanbulNext
-  \ call istanbul#next(0)
+  \ call istanbul#jump(!empty('<bang>'), <count>)
 command! 
-  \ -nargs=0
+  \ -count=1
+  \ -bang
+  \ -nargs=?
   \ IstanbulBack
-  \ call istanbul#next(1)
+  \ call istanbul#jump(!empty('<bang>'), -<count>)
 command!
+  \ -bang
   \ -nargs=0
   \ IstanbulClear
-  \ call istanbul#clear()
+  \ call istanbul#clear(!empty('<bang>'))
 command!
   \ -nargs=? 
   \ -complete=file

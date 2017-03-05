@@ -5,9 +5,10 @@ let g:istanbul#error#messages = {
   \ 'InvalidMode' : '"%s" is invalid mode for InstanbulMode',
   \ 'InvalidPrefix' : 'Prefix contains invalid characters (g:istanbul#quickfix#prefix = %s)',
   \ 'JsonNotFound' : 'coverage.json is not found. (g:istanbul#jsonPath = %s)',
-  \ 'JsonUnloaded' : 'No coverage information loaded for current buffer: %s',
   \ 'EntryNotFound' : 'Entry of "%s" is not present on "%s"',
-  \ 'NoUncoveredLine' : 'No uncovered line on current buffer: %s',
+  \ 'OutOfQuickfixDesc' : 'Reached the beginning of Quickfix list. (g:istanbul#jumpStrategy = %s)',
+  \ 'OutOfQuickfixAsc' : 'Reached the end of Quickfix list. (g:istanbul#jumpStrategy = %s)',
+  \ 'EmptyQuickfix' : 'Quickfix list is empty for current buffer.',
   \ }
 
 function! istanbul#error#spreadcall(func, args)
@@ -15,7 +16,9 @@ function! istanbul#error#spreadcall(func, args)
 endfunction
 
 function! istanbul#error#format(key, ...)
-  return printf('Istanbul: %s', istanbul#error#spreadcall('printf',
+  return printf('Istanbul: %s', len(a:000) == 0
+    \ ? g:istanbul#error#messages[a:key]
+    \ : istanbul#error#spreadcall('printf',
     \ extend([g:istanbul#error#messages[a:key]], a:000)))
 endfunction
 
