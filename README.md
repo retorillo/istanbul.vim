@@ -7,12 +7,12 @@ Code coverage visualizer for [istanbul](https://www.npmjs.com/package/istanbul)
 plus branch coverage.
 
 100% Vim Script! Works on Linux, Windows, and Mac OS, including
-non-Python(`-python`) and non-Ruby(`-ruby`) environments. 
+non-Python(`-python`) and non-Ruby(`-ruby`) environments.
 
 ## Requirements
 
 - Vim 7.x + json-ponyfill(http://github.com/retorillo/json-ponyfill.vim)
-- OR Vim >= 7.4.1154 (Supports JSON natively)
+- OR, Vim >= 7.4.1154 (Supports JSON natively)
 
 ## Install (Pathogen)
 
@@ -35,7 +35,7 @@ Update signs of current buffer by reading `coverage.json`
 
 By default, `IstanbulUpdate` continues to find `coverage/coverage.json` or
 `coverage/coverage-final.json` from current buffer's parent directory(`%:h`)
-until the root directory(`/` for Linux, drive letter for Windows).
+until the root(`/` for Linux, `<Drive>:\` or `\\<Server>\` for Windows).
 
 To change this behavior, set `g:istanbul#jsonPath`.
 
@@ -49,7 +49,7 @@ Or, execute `IstanbulUpdate` with existing JSON path.
 IstanbulUpdate coverage/custom.json
 ```
 
-By default, line coverage information like [Coveralls](https://coveralls.io/).  
+Visualization mode is line coverage information like Coveralls by default.
 Can toggle mode by using [IstanbulMode](#istanbulmode).
 
 ### IstanbulMode
@@ -71,26 +71,58 @@ Now supports the following modes:
 
 ### IstanbulNext
 
-Jump to next first line of uncovered range
+Jump to N-th next head of uncovered range.
+
+Without bang(`!`), never jump to another buffer. This rule is same as `:cc`,
+see `:help :cc`.
+
+When reached end of buffer, by default, jump cyclically without error.
+To change this behavior, execute `let g:istanbul#jumpStrategy = 'linear'`
 
 ```vim
+" Jump to next uncoveraged range
 :IstanbulNext
+" Jump to 12th uncovered range
+:12 IstanbulNext
+" Same as above
+:IstanbulNext 12
+" Same as above, but may jump to another buffer
+:IstanbulNext! 12
 ```
 
 ### IstanbulBack
 
-Jump to previous first line of uncovered range
+Jump to N-th previous head of uncovered range.
+
+Without bang(`!`), never jump to another buffer. This rule is same as `:cc`,
+see `:help :cc`.
+
+When reached beginning of buffer, by default, jump cyclically without error.
+To change this behavior, execute `let g:istanbul#jumpStrategy = 'linear'`
 
 ```vim
+" Jump to previous uncoveraged range
 :IstanbulBack
+" Jump to N-th previous uncoveraged range
+:12 IstanbulNext
+" Same as above
+:IstanbulNext 12
+" Same as above, but may jump to another buffer
+:IstanbulNext! 12
 ```
 
 ### IstanbulClear
 
-Clear all signs of current buffer
+Clear all signs of current buffer.
+
+If IstanbulClear is called with bang(!), also remove Istanbul entries from
+QuickFix list on current buffer.
 
 ```vim
+" Only clear signs
 :IstanbulClear
+" Clear signs and Quickfix
+:IstanbulClear!
 ```
 
 ## Unit testing for this plugin script (For plugin developers)
