@@ -3,6 +3,7 @@ set cpo&vim
 
 let g:istanbul#error#messages = {
   \ 'InvalidMode' : '"%s" is invalid mode for InstanbulMode',
+  \ 'InvalidPrefix' : 'Prefix contains invalid characters (g:istanbul#quickfix#prefix = %s)',
   \ 'JsonNotFound' : 'coverage.json is not found. (g:istanbul#jsonPath = %s)',
   \ 'JsonUnloaded' : 'No coverage information loaded for current buffer: %s',
   \ 'EntryNotFound' : 'Entry of "%s" is not present on "%s"',

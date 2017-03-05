@@ -11,7 +11,7 @@ for f in split(glob('autoload/**/*.vim'), "\n")
 endfor
 source plugin/istanbul.vim
 
-let s:nest = 0
+let s:nest = 1
 let s:indent = repeat("\u0020", 2)
 function! s:passing(it, time)
   echohl Statement
@@ -79,6 +79,109 @@ call s:describe('autoload/istanbul.vim')
         \ : 'test\_\foo\coverage\coverage.json')
   call s:enddescribe()
 call s:enddescribe()
+
+let s:bufnr1 = bufnr('%')
+let s:bufnr2 = bufnr('#')
+if s:bufnr1 == '-1' || s:bufnr2 == '-1' || s:bufnr1 == s:bufnr2
+  throw printf('Two diffrent valid bufnr are required.'
+    \ . ' Open at least two files before running this test snippet.'
+    \ . '(%%=%d, #=%d)',
+    \ s:bufnr1, s:bufnr2)
+endif
+let s:qfbackup = getqflist()
+try
+  let s:buf1qflist =
+    \ [ { 'bufnr': s:bufnr1, 'lnum': 10, 'text': istanbul#quickfix#format([10, 15]) },
+    \   { 'bufnr': s:bufnr1, 'lnum': 20, 'text': istanbul#quickfix#format([20, 20]) },
+    \   { 'bufnr': s:bufnr1, 'lnum': 30, 'text': istanbul#quickfix#format([30, 30]) }, ]
+
+  function! s:looseqflist(qflist)
+    return map(a:qflist,
+      \ '{ "lnum": get(v:val, "lnum", 0),'
+      \  .'"bufnr": get(v:val, "bufnr", 0),'
+      \  .'"text": v:val.text}')
+  endfunction
+
+  call setqflist([])
+  call istanbul#quickfix#update(s:bufnr1, [[10, 15], [20, 20], [30, 30]])
+  call s:describe('autoload/istanbul/quickfix.vim')
+    call s:describe('istanbul#quickfix#update')
+      call s:itshouldeql('should correctly update',
+        \ s:looseqflist(s:getqflist()), s:buf1qflist)
+    call s:enddescribe()
+    call istanbul#quickfix#update(s:bufnr2, [[10, 15], [20, 20], [30, 30]])
+    call s:describe('istanbul#quickfix#jumpnr')
+      let s:cyclic = 1
+      let s:changebuf = 1
+      call s:itshouldeql('should correctly jump ascendingly',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, !s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, +1), 3)
+      call s:itshouldeql('should correctly jump ascendingly from intermediate position',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, !s:changebuf,
+        \ s:bufnr1, 25, '^'. istanbul#quickfix#prefix, +1), 3)
+      call s:itshouldeql('should correctly jump descendingly',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, !s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, -1), 1)
+      call s:itshouldeql('should correctly jump descendingly from intermediate position',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, !s:changebuf,
+        \ s:bufnr1, 25, '^'. istanbul#quickfix#prefix, -1), 2)
+      call s:itshouldeql('should be error',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, !s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, +2),
+        \ g:istanbul#quickfix#errjumpasc)
+      call s:itshouldeql('should be opposite directional error',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, !s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, -2),
+        \ g:istanbul#quickfix#errjumpdesc)
+      call s:itshouldeql('should correctly jump ascendingly from out of range',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, !s:changebuf,
+        \ s:bufnr1, 5, '^'. istanbul#quickfix#prefix, +1), 1)
+      call s:itshouldeql('should correctly jump descendingly from out of range',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, !s:changebuf,
+        \ s:bufnr1, 40, '^'. istanbul#quickfix#prefix, -1), 3)
+      call s:itshouldeql('should correctly jump ascendingly with cyclic search',
+        \ istanbul#quickfix#jumpnr(s:cyclic, !s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, +3), 2)
+      call s:itshouldeql('should correctly jump descendingly with cyclic search',
+        \ istanbul#quickfix#jumpnr(s:cyclic, !s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, -3), 2)
+      call s:itshouldeql('should correctly jump ascendingly with changebuf search',
+        \ istanbul#quickfix#jumpnr(s:cyclic, s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, +3), 5)
+
+      call s:itshouldeql('should correctly ascendingly change buf from boundary',
+        \ istanbul#quickfix#jumpnr(s:cyclic, s:changebuf,
+        \ s:bufnr1, 40, '^'. istanbul#quickfix#prefix, +1), 4)
+      call s:itshouldeql('should correctly descendingly change buf on boundary',
+        \ istanbul#quickfix#jumpnr(s:cyclic, s:changebuf,
+        \ s:bufnr2, 5, '^'. istanbul#quickfix#prefix, -1), 3)
+
+      call s:itshouldeql('should correctly jump ascendingly with cyclic and changebuf search',
+        \ istanbul#quickfix#jumpnr(s:cyclic, s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, +6), 2)
+      call s:itshouldeql('should correctly jump descendingly with changebuf search',
+        \ istanbul#quickfix#jumpnr(!s:cyclic, s:changebuf,
+        \ s:bufnr2, 20, '^'. istanbul#quickfix#prefix, -3), 2)
+      call s:itshouldeql('should correctly jump descendingly with cyclic and changebuf search',
+        \ istanbul#quickfix#jumpnr(s:cyclic, s:changebuf,
+        \ s:bufnr1, 20, '^'. istanbul#quickfix#prefix, -6), 2)
+    call s:enddescribe()
+    call s:describe('istanbul#quickfix#clear')
+      call istanbul#quickfix#clear(s:bufnr2)
+      let s:qflistextend = [
+        \ { 'text': 'foo' },
+        \ { 'text': 'bar' },
+        \ { 'text': 'baz' },
+        \ ]
+      call setqflist(extend(getqflist(), s:qflistextend))
+      call s:itshouldeql('should correctly remove',
+        \ s:looseqflist(s:getqflist()),
+        \ s:looseqflist(extend(s:buf1qflist, s:qflistextend)))
+    call s:enddescribe()
+  call s:enddescribe()
+finally
+  call setqflist(s:qfbackup)
+endtry
 
 call s:describe('autoload/istanbul/error.vim')
   call s:describe('istanbul#error#spreadcall')
