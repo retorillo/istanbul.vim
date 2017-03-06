@@ -107,7 +107,7 @@ try
   call s:describe('autoload/istanbul/quickfix.vim')
     call s:describe('istanbul#quickfix#update')
       call s:itshouldeql('should correctly update',
-        \ s:looseqflist(s:getqflist()), s:buf1qflist)
+        \ s:looseqflist(getqflist()), s:buf1qflist)
     call s:enddescribe()
     call istanbul#quickfix#update(s:bufnr2, [[10, 15], [20, 20], [30, 30]])
     call s:describe('istanbul#quickfix#jumpnr')
@@ -175,7 +175,7 @@ try
         \ ]
       call setqflist(extend(getqflist(), s:qflistextend))
       call s:itshouldeql('should correctly remove',
-        \ s:looseqflist(s:getqflist()),
+        \ s:looseqflist(getqflist()),
         \ s:looseqflist(extend(s:buf1qflist, s:qflistextend)))
     call s:enddescribe()
   call s:enddescribe()
