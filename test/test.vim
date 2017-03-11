@@ -7,7 +7,21 @@ endif
 unlet! g:istanbul#version
 unlet! g:istanbul#jsonPath " reset by default
 for f in split(glob('autoload/**/*.vim'), "\n")
+  let varparts = []
+  let subnames = split(f, '\v(/|\\)')[1:]
+  if len(subnames) > 1
+    call extend(varparts, subnames[ : len(subnames) - 2])
+  endif
+  call add(varparts, fnamemodify(subnames[len(subnames) - 1], ':t:r'))
+  try
+    execute printf('let s:_dummy = %s#_dummy', join(varparts, '#'))
+  catch /^Vim(let):/
+    " NOP
+  catch
+    echoerr v:exception
+  endtry
   execute printf('source %s', f)
+  unlet! s:_dummy
 endfor
 source plugin/istanbul.vim
 
