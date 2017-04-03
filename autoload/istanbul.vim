@@ -124,7 +124,11 @@ function! istanbul#jump(bang, count)
     \ '^'.g:istanbul#quickfix#prefix, a:count)
   if nr > 0
     execute printf('cc%s %d', a:bang ? '!' : '', nr)
-    normal zO
+    try
+      normal zO
+    catch /^Vim(normal):E490:/
+      " NOP
+    endtry
     normal z.
   elseif nr == g:istanbul#quickfix#errjumpdesc
     throw istanbul#error#format('OutOfQuickfixDesc', g:istanbul#jumpStrategy)
