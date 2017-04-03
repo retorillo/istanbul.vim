@@ -1,7 +1,7 @@
 let s:keepcpo = &cpo
 set cpo&vim
 
-let s:modes = {}
+let s:bufferstate = {}
 let s:jsoncache = {}
 
 if !exists('g:istanbul#jsonPath')
@@ -36,16 +36,19 @@ endfunction
 
 function! istanbul#mode(mode)
   let bufnr = bufnr('%')
-  let m = get(s:modes, bufnr)
-  if empty(a:mode)
-    let s:modes[bufnr] = (m + 1) % 2
-  else
-    if tolower(a:mode) == 'line'
-      let s:modes[bufnr] = 0
-    elseif tolower(a:mode) == 'branch'
-      let s:modes[bufnr] = 1
+  let state = get(s:bufferstate, bufnr)
+  if !empty(state)
+    let cur = state['mode']
+    if empty(a:mode)
+      let state['mode'] = (cur + 1) % 2
     else
-      throw istanbul#error#format('InvalidMode', a:mode)
+      if tolower(a:mode) == 'line'
+        let state['mode'] = 0
+      elseif tolower(a:mode) == 'branch'
+        let state['mode'] = 1
+      else
+        throw istanbul#error#format('InvalidMode', a:mode)
+      endif
     endif
   endif
   call istanbul#update('')
@@ -63,25 +66,47 @@ function! istanbul#findjson(file)
   return ''
 endfunction
 
-function! istanbul#update(jsonPath)
+function! istanbul#toggle()
   let bufnr = bufnr('%')
-  let bufPath = expand('%:p')
-  let jsonPath = empty(a:jsonPath) ? istanbul#findjson(bufPath) : a:jsonPath
-  if empty(jsonPath)
+  if has_key(s:bufferstate, bufnr)
+    let state = s:bufferstate[bufnr]
+    let state['visible'] = !state['visible']
+    if !state['visible']
+      call istanbul#clear(0)
+    else
+      call istanbul#update('')
+    endif
+  else
+    call istanbul#update('')
+  endif
+endfunction
+
+function! istanbul#update(jsonpath)
+  let bufnr = bufnr('%')
+  let bufpath = expand('%:p')
+  if empty(a:jsonpath) && has_key(s:bufferstate, bufnr)
+    let state = s:bufferstate[bufnr]
+  else
+    let state = {
+      \ 'mode': 0,
+      \ 'jsonpath': !empty(a:jsonpath) ? a:jsonpath : istanbul#findjson(bufpath),
+      \ 'visible': 1,
+      \ }
+  endif
+  if empty(state['jsonpath'])
     throw istanbul#error#format('JsonNotFound', string(g:istanbul#jsonPath))
   endif
   try
-    let mode = get(s:modes, bufnr)
-    let json = istanbul#parsejson(jsonPath)
-    let similarPath = istanbul#path#mostsimilar(keys(json), bufPath)
-    if empty(similarPath)
-      throw istanbul#error#format('EntryNotFound', expand('%:.'), jsonPath)
+    let json = istanbul#parsejson(state['jsonpath'])
+    let similarpath = istanbul#path#mostsimilar(keys(json), bufpath)
+    if empty(similarpath)
+      throw istanbul#error#format('EntryNotFound', expand('%:.'), state['jsonpath'])
     endif
-    let root = get(json, similarPath)
+    let root = get(json, similarpath)
     let uncovered = []
     exec printf('sign unplace * buffer=%s', bufnr)
-    if mode == 0
-      let msg = 'LINE COVERAGE'
+    if state['mode'] == 0
+      let modestr = 'lines'
       let statementMap = get(root, 'statementMap')
       let s = get(root, 's')
       let fnMap = get(root, 'fnMap')
@@ -105,7 +130,7 @@ function! istanbul#update(jsonPath)
         endif
       endfor
     else
-      let msg = 'BRANCH COVERAGE'
+      let modestr = 'branches'
       let branchMap = get(root, 'branchMap')
       let b = get(root, 'b')
       for key in keys(branchMap)
@@ -121,11 +146,18 @@ function! istanbul#update(jsonPath)
       endfor
     endif
     call istanbul#numlist#uniq(istanbul#numlist#sort(uncovered))
-    echohl Statement
-    echo msg
-    echohl None
     let ranges = istanbul#numlist#mkrange(uncovered)
     call istanbul#quickfix#update(bufnr, ranges)
+    echohl Statement
+    if len(uncovered)
+      " TODO: change message when using locationlist
+      echo printf('%d uncovered %s are stored to quickfix. Use :cc, :cnext, and :cprev to explorer.', len(uncovered), modestr)
+    else
+      echo printf('No uncovered %s.', modestr)
+    endif
+    echohl None
+    let state['visible'] = 1
+    let s:bufferstate[bufnr] = state
   catch
     echoerr v:exception
   endtry

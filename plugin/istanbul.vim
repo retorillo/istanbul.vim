@@ -32,6 +32,10 @@ command!
   \ -complete=file
   \ IstanbulUpdate
   \ call istanbul#update(expand('<args>'))
+command!
+  \ -nargs=0
+  \ IstanbulToggle
+  \ call istanbul#toggle()
 
 let &cpo = s:keepcpo
 unlet s:keepcpo
