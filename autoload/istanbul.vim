@@ -12,7 +12,7 @@ endif
 
 function! istanbul#parsejson(json)
   if !exists("*json_decode")
-    return json_ponyfill#json_decode(a:json)
+    return json_ponyfill#json_decode(a:json, { 'progress': 1 })
   endif
   return json_decode(a:json)
 endfunction
