@@ -2,6 +2,7 @@ let s:keepcpo = &cpo
 set cpo&vim
 
 let s:modes = {}
+let s:jsoncache = {}
 
 if !exists('g:istanbul#jsonPath')
   let g:istanbul#jsonPath = ['coverage/coverage.json', 'coverage/coverage-final.json']
@@ -10,11 +11,23 @@ if !exists('g:istanbul#jumpStrategy')
   let g:istanbul#jumpStrategy = 'cyclic'
 endif
 
-function! istanbul#parsejson(json)
-  if !exists("*json_decode")
-    return json_ponyfill#json_decode(a:json, { 'progress': 1 })
-  endif
-  return json_decode(a:json)
+function! istanbul#parsejson(path)
+  try
+    let ftime = getftime(a:path)
+    if has_key(s:jsoncache, a:path) && s:jsoncache[a:path]['ftime'] == ftime
+      return s:jsoncache[a:path]['json']
+    endif
+    let read = join(readfile(a:path))
+    if !exists("*json_decode")
+      let json = json_ponyfill#json_decode(read, { 'progress': 1 })
+    else
+      let json = json_decode(read)
+    endif
+    let s:jsoncache[a:path] = { 'ftime': ftime, 'json': json  }
+    return json
+  catch
+    echoerr v:exception
+  endtry
 endfunction
 
 function! istanbul#modecompl(lead, cmd, cursor)
@@ -59,7 +72,7 @@ function! istanbul#update(jsonPath)
   endif
   try
     let mode = get(s:modes, bufnr)
-    let json = istanbul#parsejson(join(readfile(jsonPath)))
+    let json = istanbul#parsejson(jsonPath)
     let similarPath = istanbul#path#mostsimilar(keys(json), bufPath)
     if empty(similarPath)
       throw istanbul#error#format('EntryNotFound', expand('%:.'), jsonPath)
