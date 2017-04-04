@@ -109,7 +109,7 @@ function! istanbul#update(jsonpath)
     let uncovered = []
     exec printf('sign unplace * buffer=%s', bufnr)
     if state['mode'] == 0
-      let modestr = 'lines'
+      let modestr = [ 'line', 'lines' ]
       let statementMap = get(root, 'statementMap')
       let s = get(root, 's')
       let fnMap = get(root, 'fnMap')
@@ -133,7 +133,7 @@ function! istanbul#update(jsonpath)
         endif
       endfor
     else
-      let modestr = 'branches'
+      let modestr = [ 'branch', 'branches' ]
       let branchMap = get(root, 'branchMap')
       let b = get(root, 'b')
       for key in keys(branchMap)
@@ -150,13 +150,14 @@ function! istanbul#update(jsonpath)
     endif
     call istanbul#numlist#uniq(istanbul#numlist#sort(uncovered))
     let ranges = istanbul#numlist#mkrange(uncovered)
-    call istanbul#quickfix#update(bufnr, ranges)
+    call istanbul#quickfix#update(bufnr, ranges, modestr)
     echohl Statement
     if len(uncovered)
       let qfstore = g:istanbul#store =~ '^l' ? 'location-list' : 'quickfix'
       let qfprefix = g:istanbul#store =~ '^l' ? 'l' : 'c'
       echo printf('%d uncovered %s are stored to %s. Use :%snext, and :%sprev to explorer.',
-        \ len(uncovered), modestr, qfstore, qfprefix, qfprefix)
+        \ len(uncovered), len(uncovered) == 1 ? modestr[0] : modestr[1],
+        \ qfstore, qfprefix, qfprefix)
     else
       echo printf('No uncovered %s.', modestr)
     endif

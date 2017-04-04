@@ -25,18 +25,20 @@ let g:istanbul#quickfix#errjumpdesc = -1
 let g:istanbul#quickfix#errjumpasc = -2
 let g:istanbul#quickfix#errjumpempty = -3
 
-function! istanbul#quickfix#format(range)
+function! istanbul#quickfix#format(range, modestr)
   if a:range[0] == a:range[1]
-    return printf('%s Uncovered line %d',
+    return printf('%s Uncovered %s #%d',
       \ g:istanbul#quickfix#prefix,
+      \ a:modestr[0],
       \ a:range[0])
   else
-    return printf('%s Uncovered range from line %d to %d',
+    return printf('%s Uncovered %s #%d-%d',
       \ g:istanbul#quickfix#prefix,
+      \ a:modestr[1],
       \ a:range[0], a:range[1])
   endif
 endfunction
-function! istanbul#quickfix#update(bufnr, ranges)
+function! istanbul#quickfix#update(bufnr, ranges, modestr)
   if g:istanbul#quickfix#prefix !~ '\v^[-a-zA-Z0-9:_]+$'
     throw g:istanbul#error#format("InvalidPrefix", g:istanbul#quickfix#prefix)
   endif
@@ -46,7 +48,7 @@ function! istanbul#quickfix#update(bufnr, ranges)
     call add(entries, {
       \ 'bufnr': a:bufnr,
       \ 'lnum': r[0],
-      \ 'text': istanbul#quickfix#format(r),
+      \ 'text': istanbul#quickfix#format(r, a:modestr),
       \ })
   endfor
   call istanbul#quickfix#setlist(entries)
