@@ -130,7 +130,9 @@ QuickFix list on current buffer.
 `test/test.vim` is a useful snipet to verify working of autoload scripts.
 
 ```vim
-wall | let g:istanbul#test = 1 | source test/test.vim
+: view README.md | view test/test.vim | let g:istanbul#test = 1 | source test/test.vim
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# This test requires at least two valid buffers
 ```
 
 ## License
