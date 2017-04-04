@@ -102,7 +102,7 @@ if s:bufnr1 == '-1' || s:bufnr2 == '-1' || s:bufnr1 == s:bufnr2
     \ . '(%%=%d, #=%d)',
     \ s:bufnr1, s:bufnr2)
 endif
-let s:qfbackup = getqflist()
+let s:qfbackup = istanbul#quickfix#getlist()
 try
   let s:buf1qflist =
     \ [ { 'bufnr': s:bufnr1, 'lnum': 10, 'text': istanbul#quickfix#format([10, 15]) },
@@ -116,12 +116,12 @@ try
       \  .'"text": v:val.text}')
   endfunction
 
-  call setqflist([])
+  call istanbul#quickfix#setlist([])
   call istanbul#quickfix#update(s:bufnr1, [[10, 15], [20, 20], [30, 30]])
   call s:describe('autoload/istanbul/quickfix.vim')
     call s:describe('istanbul#quickfix#update')
       call s:itshouldeql('should correctly update',
-        \ s:looseqflist(getqflist()), s:buf1qflist)
+        \ s:looseqflist(istanbul#quickfix#getlist()), s:buf1qflist)
     call s:enddescribe()
     call istanbul#quickfix#update(s:bufnr2, [[10, 15], [20, 20], [30, 30]])
     call s:describe('istanbul#quickfix#jumpnr')
@@ -187,14 +187,14 @@ try
         \ { 'text': 'bar' },
         \ { 'text': 'baz' },
         \ ]
-      call setqflist(extend(getqflist(), s:qflistextend))
+      call istanbul#quickfix#setlist(extend(istanbul#quickfix#getlist(), s:qflistextend))
       call s:itshouldeql('should correctly remove',
-        \ s:looseqflist(getqflist()),
+        \ s:looseqflist(istanbul#quickfix#getlist()),
         \ s:looseqflist(extend(s:buf1qflist, s:qflistextend)))
     call s:enddescribe()
   call s:enddescribe()
 finally
-  call setqflist(s:qfbackup)
+  call istanbul#quickfix#setlist(s:qfbackup)
 endtry
 
 call s:describe('autoload/istanbul/error.vim')

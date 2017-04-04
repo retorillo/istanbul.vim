@@ -10,6 +10,9 @@ endif
 if !exists('g:istanbul#jumpStrategy')
   let g:istanbul#jumpStrategy = 'cyclic'
 endif
+if !exists('g:istanbul#store')
+  let g:istanbul#store = 'quickfix'
+endif
 
 function! istanbul#parsejson(path)
   try
@@ -150,8 +153,10 @@ function! istanbul#update(jsonpath)
     call istanbul#quickfix#update(bufnr, ranges)
     echohl Statement
     if len(uncovered)
-      " TODO: change message when using locationlist
-      echo printf('%d uncovered %s are stored to quickfix. Use :cc, :cnext, and :cprev to explorer.', len(uncovered), modestr)
+      let qfstore = g:istanbul#store =~ '^l' ? 'location-list' : 'quickfix'
+      let qfprefix = g:istanbul#store =~ '^l' ? 'l' : 'c'
+      echo printf('%d uncovered %s are stored to %s. Use :%snext, and :%sprev to explorer.',
+        \ len(uncovered), modestr, qfstore, qfprefix, qfprefix)
     else
       echo printf('No uncovered %s.', modestr)
     endif
