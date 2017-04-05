@@ -22,7 +22,7 @@ function! istanbul#parsejson(path)
     endif
     let read = join(readfile(a:path))
     if !exists("*json_decode")
-      let json = json_ponyfill#json_decode(read, { 'progress': 1 })
+      let json = json_ponyfill#json_decode(read, { 'python': 1, 'progress': 1 })
     else
       let json = json_decode(read)
     endif
