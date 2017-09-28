@@ -103,11 +103,12 @@ if s:bufnr1 == '-1' || s:bufnr2 == '-1' || s:bufnr1 == s:bufnr2
     \ s:bufnr1, s:bufnr2)
 endif
 let s:qfbackup = istanbul#quickfix#getlist()
+let s:qfformatmodestr = ['line', 'lines'] 
 try
   let s:buf1qflist =
-    \ [ { 'bufnr': s:bufnr1, 'lnum': 10, 'text': istanbul#quickfix#format([10, 15]) },
-    \   { 'bufnr': s:bufnr1, 'lnum': 20, 'text': istanbul#quickfix#format([20, 20]) },
-    \   { 'bufnr': s:bufnr1, 'lnum': 30, 'text': istanbul#quickfix#format([30, 30]) }, ]
+    \ [ { 'bufnr': s:bufnr1, 'lnum': 10, 'text': istanbul#quickfix#format([10, 15], s:qfformatlinemode) },
+    \   { 'bufnr': s:bufnr1, 'lnum': 20, 'text': istanbul#quickfix#format([20, 20], s:qfformatlinemode) },
+    \   { 'bufnr': s:bufnr1, 'lnum': 30, 'text': istanbul#quickfix#format([30, 30], s:qfformatlinemode) }, ]
 
   function! s:looseqflist(qflist)
     return map(a:qflist,
@@ -117,13 +118,13 @@ try
   endfunction
 
   call istanbul#quickfix#setlist([])
-  call istanbul#quickfix#update(s:bufnr1, [[10, 15], [20, 20], [30, 30]])
+  call istanbul#quickfix#update(s:bufnr1, [[10, 15], [20, 20], [30, 30]], s:qfformatlinemode)
   call s:describe('autoload/istanbul/quickfix.vim')
     call s:describe('istanbul#quickfix#update')
       call s:itshouldeql('should correctly update',
         \ s:looseqflist(istanbul#quickfix#getlist()), s:buf1qflist)
     call s:enddescribe()
-    call istanbul#quickfix#update(s:bufnr2, [[10, 15], [20, 20], [30, 30]])
+    call istanbul#quickfix#update(s:bufnr2, [[10, 15], [20, 20], [30, 30]], s:qfformatlinemode)
     call s:describe('istanbul#quickfix#jumpnr')
       let s:cyclic = 1
       let s:changebuf = 1
