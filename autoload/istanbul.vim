@@ -159,7 +159,7 @@ function! istanbul#update(jsonpath)
         \ len(uncovered), len(uncovered) == 1 ? modestr[0] : modestr[1],
         \ qfstore, qfprefix, qfprefix)
     else
-      echo printf('No uncovered %s.', modestr)
+      echo printf('No uncovered %s.', modestr[1])
     endif
     echohl None
     let state['visible'] = 1
